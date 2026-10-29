@@ -1,0 +1,6 @@
+{
+  "name": "Caisse Église",
+  "description": "Gestion de la trésorerie et comptabilité d'église : dîmes, offrandes, quêtes, dons et dépenses avec rapports détaillés.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

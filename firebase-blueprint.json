@@ -1,0 +1,86 @@
+{
+  "entities": {
+    "ChurchTransaction": {
+      "title": "ChurchTransaction",
+      "description": "Represents a cash inflow or outflow in the church treasury",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the church treasurer or parish leader managing the record"
+        },
+        "type": {
+          "type": "string",
+          "description": "RECETTE (cash inflow) or DEPENSE (cash outflow)",
+          "enum": ["RECETTE", "DEPENSE"]
+        },
+        "amount": {
+          "type": "number",
+          "description": "Transaction amount in local currency"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category: DIME, OFFRANDE, DON, QUETE_SPECIALE, ACTION_GRACE, TRAVAUX, SOCIAL, FACTURE, CULTE, MISSION, AUTRE"
+        },
+        "categoryLabel": {
+          "type": "string",
+          "description": "Human-readable label for the category"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Payment channel: ESPECES, MOBILE_MONEY, BANQUE, CHEQUE, AUTRE"
+        },
+        "serviceType": {
+          "type": "string",
+          "description": "Service or event: CULTE_DIMANCHE, CULTE_SEMAINE, VEILLEE, EVENEMENT_SPECIAL, AUTRE"
+        },
+        "donorOrRecipient": {
+          "type": "string",
+          "description": "Optional name of donor (for tithe/gift) or recipient (for expense)"
+        },
+        "note": {
+          "type": "string",
+          "description": "Detailed remarks or description of transaction"
+        },
+        "referenceNumber": {
+          "type": "string",
+          "description": "Receipt or voucher or mobile transaction reference"
+        },
+        "date": {
+          "type": "string",
+          "description": "Transaction date in YYYY-MM-DD format"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation. Clients must supply FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update. Clients must supply FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "type",
+        "amount",
+        "category",
+        "categoryLabel",
+        "paymentMethod",
+        "serviceType",
+        "date",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": {
+        "$ref": "#/entities/ChurchTransaction"
+      },
+      "description": "Collection of treasury transactions scoped strictly to the church manager"
+    }
+  }
+}

@@ -1,0 +1,71 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidChurchTransaction(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.type in ['RECETTE', 'DEPENSE'] &&
+             (data.amount is int || data.amount is float) && data.amount > 0 && data.amount <= 1000000000 &&
+             data.category is string && data.category.size() >= 2 && data.category.size() <= 50 &&
+             data.categoryLabel is string && data.categoryLabel.size() >= 2 && data.categoryLabel.size() <= 100 &&
+             data.paymentMethod is string && data.paymentMethod.size() >= 2 && data.paymentMethod.size() <= 50 &&
+             data.serviceType is string && data.serviceType.size() >= 2 && data.serviceType.size() <= 50 &&
+             (!('donorOrRecipient' in data) || (data.donorOrRecipient is string && data.donorOrRecipient.size() <= 200)) &&
+             (!('note' in data) || (data.note is string && data.note.size() <= 1000)) &&
+             (!('referenceNumber' in data) || (data.referenceNumber is string && data.referenceNumber.size() <= 100)) &&
+             data.date is string && data.date.size() >= 8 && data.date.size() <= 20 &&
+             (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time)) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // Scoped transactions subcollection under users/{userId}
+    match /users/{userId}/transactions/{transactionId} {
+      allow get, list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(transactionId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'type', 'amount', 'category', 'categoryLabel', 'paymentMethod', 'serviceType', 'date', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'type', 'amount', 'category', 'categoryLabel', 'paymentMethod', 'serviceType', 'donorOrRecipient', 'note', 'referenceNumber', 'date', 'createdAt', 'updatedAt']) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().updatedAt is timestamp &&
+                       isValidChurchTransaction(incoming());
+
+      allow update: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(transactionId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp &&
+                       isValidChurchTransaction(incoming()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['type', 'amount', 'category', 'categoryLabel', 'paymentMethod', 'serviceType', 'donorOrRecipient', 'note', 'referenceNumber', 'date', 'updatedAt']);
+
+      allow delete: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(transactionId);
+    }
+  }
+}
